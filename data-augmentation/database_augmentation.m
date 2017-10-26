@@ -17,7 +17,13 @@
 % either in 'test' or in 'train', but they are not splitted between them.
 % It is possible to alter the number of modifications per image and the
 % train/test split by changing the values of the 'modifications_per_image'
-% and the 'train_split' variables, respectively.
+% and the 'train_split' variables, respectively. The name convention of the
+% saved modifications is 'img_{target}_{imgcount}_{modificationcount}.jpg'.
+% Here, 'target' is target class (5, 10, 20 or 50); 'imgcount' is the 
+% index of the original image (found under the 'target' subfolder of
+% 'banknotes'); and 'modificationcount' is the index of the modification.
+% As explained before, all the images for a given 'target' and 'imgcount'
+% are either in 'test' or in 'train'.
 
 % In order to learn about the modifications applied to the images, refer to
 % the documentation of the 'modify_image.m' function.
