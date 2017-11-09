@@ -61,8 +61,7 @@ function J = modify_image(I, attributes)
         slack = floor((W - H)/2);
         J = J(slack+1:end-slack,:,:);
     end
-    scale_factor = attributes.Side / Side;
-    J = imresize(J, scale_factor);
+    J = imresize(J, [attributes.Side, attributes.Side]);
     
     %% Apply gamma correction
     
