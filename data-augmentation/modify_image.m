@@ -42,6 +42,10 @@ function J = modify_image(I, attributes)
         attributes.SPNoise = 0;
     end
     
+    if ~isfield(attributes, 'HueAlter')
+        attributes.HueAlter = 0;
+    end
+    
     %% Rotate image
     
     J = imrotate(I, attributes.Rotation, 'bilinear');
@@ -76,6 +80,14 @@ function J = modify_image(I, attributes)
     
     if attributes.GNoise > 1e-9
         J = imnoise(J, 'gaussian', 0, attributes.GNoise);
+    end
+    
+    %% Alter hue
+    
+    if abs(attributes.HueAlter) > 1e-9
+        J = rgb2hsv(J);
+        J(:,:,1) = min(1.0, J(:,:,1)*attributes.HueAlter);
+        J = hsv2rgb(J);
     end
     
     %% Add salt & pepper noise

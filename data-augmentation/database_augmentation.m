@@ -30,21 +30,24 @@
 
 rng(42); % For reproducible results
 
-attr = struct('Side', 256, ... % fix
+attr = struct('Side', 256, ... % fixed
     'Rotation', 0, ...         % variable
     'Gamma', 1, ...            % variable
     'GBlur', 0.0, ....         % variable
     'GNoise', 0.0, ...,        % variable
-    'SPNoise', 0.0);           % variable
+    'SPNoise', 0.0, ...        % variable
+    'HueAlter', 0.0);          % variable
 
-modifications_per_image = 100;
-train_split = 0.8;
+modifications_per_image = 10;
+train_split = 0.6;
+validation_split = 0.2;
 
 range_rotation = [0, 360];
 range_gamma = [0.5, 2];
-range_gblur = [0, 2];
-range_gnoise = [-5, -1.8];
-range_spnoise = [-4, -1.8];
+range_gblur = [0, 1];
+range_gnoise = [-5, -2];
+range_spnoise = [-4, -2];
+range_huealter = [0.6, 1.4];
 
 dataset_folder = './banknotes';
 
@@ -54,6 +57,7 @@ end
 
 output_folder = './banknotes_augmented';
 output_folder_train = [output_folder, '/train'];
+output_folder_val = [output_folder, '/val'];
 output_folder_test = [output_folder, '/test'];
 
 if ~exist(output_folder_train, 'dir')
@@ -64,7 +68,12 @@ if ~exist(output_folder_test, 'dir')
     mkdir(output_folder_test)
 end
 
+if ~exist(output_folder_val, 'dir')
+    mkdir(output_folder_val)
+end
+
 delete([output_folder_train, '/*']);
+delete([output_folder_val, '/*']);
 delete([output_folder_test, '/*']);
 
 
@@ -80,6 +89,7 @@ for idx = 1:length(folders)
     images = dir(target_path);
     
     N_images = length(images) - 2; % Substract 2 because . and .. folders
+    N_images_val = round(validation_split*N_images);
     N_images_train = round(train_split*N_images);
     
     for jdx = 1:length(images)
@@ -108,11 +118,14 @@ for idx = 1:length(folders)
                 if attr.SPNoise < 1e-4
                     attr.SPNoise = 0;
                 end
+                attr.HueAlter = range_huealter(1) + rand()*(range_huealter(2) - range_huealter(1));
                 J = modify_image(I, attr);
             end
             imgname_out = ['img_', target, '_', num2str(imgcount), '_', num2str(modification), '.jpg'];
             if imgcount <= N_images_train
                 output_image_path = [output_folder_train, '/', imgname_out];
+            elseif imgcount <= N_images_val + N_images_train
+                output_image_path = [output_folder_val, '/', imgname_out];
             else
                 output_image_path = [output_folder_test, '/', imgname_out];
             end
