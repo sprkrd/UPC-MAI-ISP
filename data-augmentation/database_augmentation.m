@@ -38,7 +38,7 @@ attr = struct('Side', 256, ... % fixed
     'SPNoise', 0.0, ...        % variable
     'HueAlter', 0.0);          % variable
 
-modifications_per_image = 10;
+modifications_per_image = 3;
 train_split = 0.6;
 validation_split = 0.2;
 
