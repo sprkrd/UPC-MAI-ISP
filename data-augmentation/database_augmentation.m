@@ -38,16 +38,16 @@ attr = struct('Side', 256, ... % fixed
     'SPNoise', 0.0, ...        % variable
     'HueAlter', 0.0);          % variable
 
-modifications_per_image = 3;
+modifications_per_image = 100;
 train_split = 0.6;
 validation_split = 0.2;
 
 range_rotation = [0, 360];
-range_gamma = [0.5, 2];
-range_gblur = [0, 1];
-range_gnoise = [-5, -2];
-range_spnoise = [-4, -2];
-range_huealter = [0.6, 1.4];
+range_gamma = [0.8, 2];
+range_gblur = [0, 0.8];
+range_gnoise = [-5, -3];
+range_spnoise = [-4, -2.3];
+range_huealter = [0.8, 1.2];
 
 dataset_folder = './banknotes';
 
