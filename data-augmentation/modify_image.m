@@ -8,6 +8,7 @@ function J = modify_image(I, attributes)
 %       Defaults to 256.
 %   -   Rotation: rotation of the image (applied before cropping). Defaults
 %       to 0 (no rotation.
+%   -   ShearX and shearY: shear values
 %   -   Gamma: gamma correction. Defaults to 1, or no correction.
 %   -   GBlur: std dev of a Gaussian filter applied to the image. Defaults
 %       to 0, or no filtering)
@@ -46,9 +47,25 @@ function J = modify_image(I, attributes)
         attributes.HueAlter = 0;
     end
     
-    %% Rotate image
+    if ~isfield(attributes, 'shearX')
+        attributes.shearX = 0;
+    end
     
-    J = imrotate(I, attributes.Rotation, 'bilinear');
+    if ~isfield(attributes, 'shearY')
+        attributes.shearY = 0;
+    end
+    
+    %% Rotate and shear image
+    
+    theta = attributes.Rotation*pi/180;
+    
+    xform_rotate = [cos(theta), -sin(theta), 0; sin(theta), cos(theta), 0; 0, 0, 1];
+    xform_shear = [1, attributes.shearX, 0; attributes.shearY, 1, 0; 0, 0 ,1];
+    tform = affine2d(xform_shear'*xform_rotate');
+    
+    J = imwarp(I, tform);
+    
+    % J = imrotate(I, attributes.Rotation, 'bilinear');
     
     %% Crop and resize image
     
