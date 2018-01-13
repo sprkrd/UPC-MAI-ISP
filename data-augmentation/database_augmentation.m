@@ -48,6 +48,7 @@ range_gblur = [0, 0.8];
 range_gnoise = [-5, -3];
 range_spnoise = [-4, -2.3];
 range_huealter = [0.8, 1.2];
+range_shear = [0.0, 0.3];
 
 dataset_folder = './banknotes';
 
@@ -111,6 +112,8 @@ for idx = 1:length(folders)
                 attr.Gamma = range_gamma(1) + rand()*(range_gamma(2) - range_gamma(1));
                 attr.GBlur = range_gblur(1) + rand()*(range_gblur(2) - range_gblur(1));
                 attr.GNoise = 10^(range_gnoise(1) + rand()*(range_gnoise(2) - range_gnoise(1)));
+                attr.shearX = range_shear(1) + rand()*(range_shear(2) - range_shear(1));
+                attr.shearY = range_shear(1) + rand()*(range_shear(2) - range_shear(1));
                 if attr.GNoise < 1e-4
                     attr.GNoise = 0;
                 end
