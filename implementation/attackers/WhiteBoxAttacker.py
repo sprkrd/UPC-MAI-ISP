@@ -1,20 +1,25 @@
+from .Attacker import Attacker
+import torch
+import torch.nn.functional as F
+from torch.autograd import Variable
+
 class WhiteBoxAttacker(Attacker):
 
     def __init__(self, attack_shape):
         super(WhiteBoxAttacker, self).__init__(attack_shape)
         
-      def attack(self, model, input_data, target):
+    def attack(self, model, input_data, target):
         raise NotImplementedError
         
-      def feedback(self, last_corrects):
+    def feedback(self, last_corrects):
         raise NotImplementedError
 
 
 
 class PGDAttack(WhiteBoxAttacker):
 
-    def __init__(self, attack_shape, epsilon, a, k):
-        super().__init__(attack_shape)
+    def __init__(self, epsilon, a, k, attack_shape=None):
+        super(PGDAttack, self).__init__(attack_shape)
 
         self.epsilon = epsilon
         self.a = a
