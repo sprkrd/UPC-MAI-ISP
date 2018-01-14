@@ -27,8 +27,12 @@ if runGPU:
 # means and stds of the train set can be obtained with 
 # print(train_set.getMeansAndStdPerChannel())
 # this takes quite a while, so hard-coded here:
-means = np.array([ 0.14588552,  0.26887908,  0.14538361])
-stds = np.array([ 0.20122388,  0.2800698 ,  0.20029236])
+# means = np.array([ 0.14588552,  0.26887908,  0.14538361])
+# stds = np.array([ 0.20122388,  0.2800698 ,  0.20029236])
+means = np.array([ 0.34065133, 0.30230788, 0.27947797])
+stds = np.array([ 0.28919015, 0.26877816, 0.25182973])
+
+
 
 
 transformations = transforms.Compose([transforms.ToTensor(), transforms.Normalize(means, stds)])
