@@ -4,6 +4,9 @@ import torch.nn as nn
 class PixelLevelTransferN(nn.Module):
     def __init__(self, intensity, in_channels=1, out_channels=1):
         super(PixelLevelTransferN, self).__init__()
+
+        self.intensity = intensity
+
         ## encoder:
         self.enc1 = nn.Sequential(
             nn.Conv2d(in_channels, 64, kernel_size=5, padding=2, stride=2),
@@ -22,7 +25,7 @@ class PixelLevelTransferN(nn.Module):
             nn.LeakyReLU(0.2))
         ## decoder:
         self.dec1 = nn.Sequential(
-            nn.ConvTranspose2d(512, 256, kernel_size=5, padding=2, stride=2, output_padding=1),
+            nn.ConvTranspose2d(512, 256, kernel_size=5, padding=2, stride=2),
             nn.BatchNorm2d(256),
             nn.ReLU())
         self.dec2 = nn.Sequential(
@@ -30,15 +33,17 @@ class PixelLevelTransferN(nn.Module):
             nn.BatchNorm2d(128),
             nn.ReLU())
         self.dec3 = nn.Sequential(
-            nn.ConvTranspose2d(128, 64, kernel_size=5, padding=2, stride=2, output_padding=1),
+            nn.ConvTranspose2d(128, 64, kernel_size=5, padding=2, stride=2),
             nn.BatchNorm2d(64),
             nn.ReLU())
         self.dec4 = nn.Sequential(
-            nn.ConvTranspose2d(64, out_channels, kernel_size=5, padding=2, stride=2, output_padding=1),
+            nn.ConvTranspose2d(64, out_channels, kernel_size=5, padding=2, stride=2),
             nn.Tanh())
     
     def forward(self, x):
+        print(x.shape)
         out = self.enc1(x)
+        print(out.shape)
         out = self.enc2(out)
         print(out.shape)
         out = self.enc3(out)
@@ -52,5 +57,5 @@ class PixelLevelTransferN(nn.Module):
         out = self.dec3(out)
         print(out.shape)
         out = self.dec4(out)
-        out = out.clamp(min=-intensity, max=intensity)
+        out = out.clamp(min=-self.intensity, max=self.intensity)
         return out
