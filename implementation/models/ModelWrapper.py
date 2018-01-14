@@ -1,10 +1,10 @@
-import torch
+import torch.nn
+
 from torchvision import transforms
 from torch.autograd import Variable
 
 from skimage.transform import resize
 
-import numpy as np
 
 class ModelWrapper:
 
@@ -16,19 +16,15 @@ class ModelWrapper:
             transforms.ToTensor(),
             transforms.Normalize(means, std),
         ])
+        self.softmax = torch.nn.Softmax(1)
 
     def __call__(self, img):
-        img = self.tform(resize(img, (256, 256), mode="constant"))
+        img = self.tform(resize(img, (224, 224), mode="constant"))
         batch_shape = [1,] + list(img.size())
         batch = img.view(*batch_shape)
-        # print(batch.shape)
-        batch = torch.cat((batch,)*25)
-        # print(batch.shape)
         x = Variable(batch, volatile=True)
-        # self.model(x)
-        # print(type(x))
-        print(x.size())
-        return self.model(x)
+        y = self.softmax(self.model(x))
+        return y
 
 
 if __name__ == "__main__":
@@ -37,6 +33,6 @@ if __name__ == "__main__":
     # quick test
     model = pretrained_res18()
     wrapper = ModelWrapper(model)
-    img = imread("/home/sprkrd/code/UPC-MAI-ISP/data-augmentation/banknotes_augmented_small/test/img_10_100_1.jpg")
+    img = imread("../../data-augmentation/banknotes_augmented_small/test/img_10_100_2.jpg")
     print(wrapper(img))
 
