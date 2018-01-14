@@ -1,0 +1,38 @@
+<!doctype html>
+<html>
+<head>
+<meta http-equiv="Content-Type" charset="UTF-8" />
+<title>Sending forms with FormData &ndash; MDN</title>
+<script>
+"use strict";
+
+function ajaxSuccess () {
+  results_box = document.getElementById("results_box");
+  results_box.innerHTML = this.responseText;
+}
+
+function AJAXSubmit (oFormElement) {
+  if (!oFormElement.action) { return; }
+  var oReq = new XMLHttpRequest();
+  oReq.onload = ajaxSuccess;
+  oReq.open("post", oFormElement.action);
+  oReq.send(new FormData(oFormElement));
+}
+</script>
+
+</head>
+	<body>
+		<h1>Sending forms with FormData</h1>
+
+		<h3>Enctype: multipart/form-data</h3>
+
+		<form action="http://localhost:8081" method="post" enctype="multipart/form-data" onsubmit="AJAXSubmit(this); return false;">
+			<input type="file" name="file" required/>
+			<input name="submit" type="submit" value="Submit"/>
+		</form>
+		
+		<div id="results_box">
+			
+		</div>
+	</body>
+</html>

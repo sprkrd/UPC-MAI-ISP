@@ -24,7 +24,7 @@ class ModelWrapper:
         batch = img.view(*batch_shape)
         x = Variable(batch, volatile=True)
         y = self.softmax(self.model(x))
-        return y
+        return y.data.tolist()[0]
 
 
 if __name__ == "__main__":
