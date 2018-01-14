@@ -19,7 +19,7 @@ import time
 ##
 # Run on GPU?
 ##
-runGPU = True
+runGPU = False
 if runGPU:
 	cudnn.benchmark = True
 
@@ -133,8 +133,8 @@ for i in range(0, epochs):
 	print('-- EPOCH ' + str(i+1) + ' DONE.')
 	print('Time elapsed: ' + str(time.time() - t))
 	print('Sampled accuracies from ' + str(sampleBatches) + ' batches.')
-	print('(sampled) Train Accuracy of CNN: ' + str(trainAcc * 100) + '%')
-	print('(sampled) Validation Accuracy of CNN: ' + str(validationAcc * 100) + '%')
+	print('(sampled) Attacked Train Accuracy of CNN: ' + str(trainAcc * 100) + '%')
+	print('(sampled) Attacked Validation Accuracy of CNN: ' + str(validationAcc * 100) + '%')
 	print('--')
 
 	if validationAcc > bestValidationAcc:
