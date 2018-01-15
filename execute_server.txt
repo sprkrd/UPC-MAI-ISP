@@ -1,0 +1,9 @@
+Python:
+python -m implementation.website.http_server
+
+Python3:
+python3 -m implementation.website.http_server
+
+Open index.html in implementation/website/resources
+
+

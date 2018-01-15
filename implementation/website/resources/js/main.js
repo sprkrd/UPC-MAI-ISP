@@ -10,45 +10,69 @@
 
 function ajaxSuccess() {
   results_box = document.getElementById("results_box");
-  //~ results_box.innerHTML = this.responseText;
   for (var i=results_box.children.length; i--; ) {
     ch = results_box.children[i];
     if (ch.tagName == "DIV") {
       ch.remove();
     }
   }
-  results = JSON.parse(this.responseText);
-  for (var i=0; i < results.length; ++i) {
-    r = results[i]
-    var row = document.createElement("DIV");
-    var header = document.createElement("H4");
-    var col0 = document.createElement("DIV");
-    var col1 = document.createElement("DIV");
-    var img = document.createElement("IMG");
-    var canvas = document.createElement("CANVAS");
-    row.className = "row";
-    header.innerText = r.title;
-    col0.className = col1.className = "col-xs-12 col-md-6";
-    img.setAttribute("src", "data:image/png;base64, " + r.image);
-    canvas.setAttribute("width", "100%");
-    canvas.setAttribute("height", "100%");
-    canvas.id = "chart" + (i+1).toString();
-    row.appendChild(header);
-    row.appendChild(col0);
-    row.appendChild(col1);
-    col0.appendChild(img);
-    col1.appendChild(canvas);
-    results_box.appendChild(row);
-    refreshChart(canvas, r.data);
+  if (this.status == 200) {
+    //~ results_box.innerHTML = this.responseText;
+    results = JSON.parse(this.responseText);
+    for (var i=0; i < results.length; ++i) {
+      r = results[i]
+      var row = document.createElement("DIV");
+      var header = document.createElement("H4");
+      var col0 = document.createElement("DIV");
+      var col1 = document.createElement("DIV");
+      var img = document.createElement("IMG");
+      var canvas = document.createElement("CANVAS");
+      row.className = "row";
+      header.innerText = r.title;
+      col0.className = col1.className = "col-md-6 col-xs-6";
+      img.setAttribute("src", "data:image/png;base64, " + r.image);
+      canvas.setAttribute("width", "100%");
+      canvas.setAttribute("height", "100%");
+      canvas.id = "chart" + (i+1).toString();
+      row.appendChild(header);
+      row.appendChild(col0);
+      row.appendChild(col1);
+      col0.appendChild(img);
+      col1.appendChild(canvas);
+      results_box.appendChild(row);
+      refreshChart(canvas, r.data);
+    }
+  }
+  else {
+    var error = document.createElement("DIV");
+    error.className = "alert alert-danger";
+    error.setAttribute("role", "alert");
+    error.appendChild(document.createTextNode(this.responseText));
+    results_box.appendChild(error);
   }
 }
 
 var charts = {};
 
+(function() {
+  var logarithmic = document.getElementById("logarithmic");
+  logarithmic.onclick = function() {
+    for (var id in charts) {
+      var canvas = document.getElementById(id);
+      var data = charts[id].config.data.datasets[0].data;
+      refreshChart(canvas, data);
+    }
+  };
+})();
+
 function refreshChart(canvas, data) {
   if (charts[canvas.id]) {
     charts[canvas.id].destroy();
   }
+  var rounded = data.map(function(x) {
+    return Math.round(10000*x)/10000;
+  });
+  var logarithmic = document.getElementById("logarithmic");
   var ctx = canvas.getContext('2d');
   charts[canvas.id] = new Chart(ctx, {
     type: 'bar',
@@ -56,7 +80,7 @@ function refreshChart(canvas, data) {
       labels: ["5€", "10€", "20€", "50€"],
       datasets: [{
 	label: 'Probability density',
-	data: data,
+	data: rounded,
 	backgroundColor: [
 	  'rgba(78, 73, 67, 0.2)',
 	  'rgba(226, 151, 156, 0.2)',
@@ -80,9 +104,10 @@ function refreshChart(canvas, data) {
       scales: {
 	yAxes: [{
 	  ticks: {
+	      min: logarithmic.checked? 1e-4 : 0,
 	      beginAtZero:true
 	  },
-	  type:"logarithmic"
+	  type: logarithmic.checked? "logarithmic" : "linear"
 	}]
       },
       legend: {
