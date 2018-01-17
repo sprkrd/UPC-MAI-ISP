@@ -10,6 +10,8 @@ import torchvision
 import os
 
 from .data.EuroNotes import EuroNotes
+from .utils import means, stds
+from .attackers.WhiteBoxAttacker import PGDAttack
 
 import numpy as np
 
@@ -23,14 +25,6 @@ runGPU = True
 if runGPU:
     cudnn.benchmark = True
 
-
-# means and stds of the train set can be obtained with 
-# print(train_set.getMeansAndStdPerChannel())
-# this takes quite a while, so hard-coded here:
-# means = np.array([ 0.14588552,  0.26887908,  0.14538361])
-# stds = np.array([ 0.20122388,  0.2800698 ,  0.20029236])
-means = np.array([ 0.34065133, 0.30230788, 0.27947797])
-stds = np.array([ 0.28919015, 0.26877816, 0.25182973])
 
 transformations = transforms.Compose([
     lambda img: resize(img, (224,224), preserve_range=True, mode="constant"),
@@ -63,27 +57,32 @@ epochs = 5
 
 bestValidationAcc = 0.0
 
-for i in range(0, epochs):
-    cnn.train()
+attack = PGDAttack(k=5)
 
+for i in range(0, epochs):
     losses = 0
     lossSum = 0.0
     t = time.time()
     for i_batch, sample_batched in enumerate(train_loader):
-        images = Variable(sample_batched['image'])
-        labels = Variable(sample_batched['label'])
+        images = sample_batched['image']
+        labels = sample_batched['label']
         if runGPU:
             images = images.cuda()
             labels = labels.cuda()
-
+        # the attack method does not modify the model
+        if cnn.training:
+            cnn.eval()
+        # the attack method returns the perturbed images already encapsulated
+        # in a variable
+        images_pert = attack.attack(cnn, images, labels)
+        # images_pert = Variable(images)
+        labels = Variable(labels)
+        cnn.train()
         optimizer.zero_grad()
-
-        outputs = cnn(images)
-
+        outputs = cnn(images_pert)
         loss = criterion(outputs, labels)
         loss.backward()
         optimizer.step()
-
         losses += 1
         lossSum += loss.data[0]
         batchesPerReport = 100
@@ -92,7 +91,8 @@ for i in range(0, epochs):
             losses = 0
             lossSum = 0
     
-    cnn.eval()
+    if cnn.training:
+        cnn.eval()
     
     sampleBatches = 20
 

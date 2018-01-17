@@ -30,13 +30,17 @@ class PGDAttack(WhiteBoxAttacker):
 
     def attack(self, model, x_nat, y):
         """ Takes an input batch and adds a small perturbation """
+        is_cuda = x_nat.is_cuda
         min_values = -means/stds
         max_values = (1-means)/stds
         epsilon = self.epsilon # Maximum strength of the perturbation
         a = self.a # maximum change to the image
         k = self.k
         z = torch.rand(x_nat.size())
-        x = Variable(x_nat + 2*epsilon*(torch.rand(x_nat.size())-0.5), requires_grad=True)
+        r0 = 2*epsilon*(torch.rand(x_nat.size()) - 0.5)
+        if is_cuda:
+            r0 = r0.cuda()
+        x = Variable(x_nat + r0, requires_grad=True)
         y = Variable(y)
         for _ in range(k):
             y_ = model(x)
@@ -47,14 +51,14 @@ class PGDAttack(WhiteBoxAttacker):
             for ch in range(3):
                 x[:,ch,:,:] = torch.clamp(x[:,ch,:,:], min_values[ch], max_values[ch])
             x = Variable(x, requires_grad=True)
-        return x.detach(), y
+        return x.detach()
 
     def __call__(self, model, img, return_img=False):
         s = torch.nn.Softmax(1)
         x = tform2(tform1(img))
         y = model(x)
         _, label = torch.max(y.data, 1)
-        x_pert, _ = self.attack(model, x.data, label)
+        x_pert = self.attack(model, x.data, label)
         y = s(model(x_pert))
         y = y.data.tolist()[0]
         if return_img:
@@ -114,8 +118,4 @@ if __name__ == "__main__":
     plt.colorbar()
     plt.tight_layout()
     plt.show()
-
-
-
-
 
