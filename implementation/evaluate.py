@@ -92,15 +92,17 @@ if __name__ == "__main__":
 
     # which=0 basic model
     # which=1 trained against PGD for 5 epochs (only against mild attacks)
-    cnn = pretrained_res18(which=1, gpu=runGPU)
+    # which=2 trained against PGD for 5 epochs (against strong attacks)
+    cnn = pretrained_res18(which=2, gpu=runGPU)
 
-    # attacker = None
-    attacker = PGDAttack(k=5, epsilon=0.03) # mild attack
-    attacker = PGDAttack(k=10, epsilon=0.05) # strong attack
+    attacker_mild = PGDAttack(k=5, epsilon=0.03) # mild attack
+    attacker_strong = PGDAttack(k=10, epsilon=0.05) # strong attack
 
-    sampleBatches = 10
+    # sampleBatches = 10
+    # evaluate(cnn, train_set, sampleBatches=sampleBatches, prefix="Train set")
+    # evaluate(cnn, val_set, sampleBatches=sampleBatches, prefix="Validation set")
 
-    # evaluate(cnn, train_set, sampleBatches=100, prefix="Train set")
-    # evaluate(cnn, val_set, sampleBatches=100, prefix="Validation set")
-    evaluate(cnn, test_set, prefix="Test set", attacker=attacker, batch_size=25)
+    evaluate(cnn, test_set, prefix="Test set (no attack)", attacker=None)
+    evaluate(cnn, test_set, prefix="Test set (mild attack)", attacker=attacker_mild)
+    evaluate(cnn, test_set, prefix="Test set (strong attack)", attacker=attacker_strong)
 
