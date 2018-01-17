@@ -1,21 +1,23 @@
+# so it can be executed both with Python2 and Python3
+from __future__ import print_function, division
+
 import torch
 import torch.nn as nn
 import torch.optim as optim
 import torch.backends.cudnn as cudnn
+import torchvision
+import os
+import numpy as np
+import time
+
 from torch.autograd import Variable
 from torch.utils.data import DataLoader
 from torchvision import transforms
 from skimage.transform import resize
-import torchvision
-import os
 
 from .data.EuroNotes import EuroNotes
 from .utils import means, stds
 from .attackers.WhiteBoxAttacker import PGDAttack
-
-import numpy as np
-
-import time
 
 
 ##
@@ -53,11 +55,12 @@ criterion = nn.CrossEntropyLoss()
 optimizer = optim.Adam(cnn.parameters())
 
 
-epochs = 5
+epochs = 10
 
 bestValidationAcc = 0.0
 
-attack = PGDAttack(k=5)
+# attack = PGDAttack(k=5)
+attack = PGDAttack(k=10, epsilon=0.05)
 
 for i in range(0, epochs):
     losses = 0
@@ -75,7 +78,6 @@ for i in range(0, epochs):
         # the attack method returns the perturbed images already encapsulated
         # in a variable
         images_pert = attack.attack(cnn, images, labels)
-        # images_pert = Variable(images)
         labels = Variable(labels)
         cnn.train()
         optimizer.zero_grad()
@@ -94,7 +96,7 @@ for i in range(0, epochs):
     if cnn.training:
         cnn.eval()
     
-    sampleBatches = 20
+    sampleBatches = 100
 
     print("Evaluating against training set...")
     correct = 0.0   
@@ -102,11 +104,12 @@ for i in range(0, epochs):
     for i_batch, data in enumerate(train_loader):
         if i_batch > sampleBatches:
             break
-        images = Variable(data['image'], volatile=True)
-        labels = data['label'].type(torch.LongTensor)
+        images = sample_batched['image']
+        labels = sample_batched['label'].type(torch.LongTensor)
         if runGPU:
             images = images.cuda()
-        outputs = cnn(images)
+        images_pert = attack.attack(cnn, images, labels)
+        outputs = cnn(images_pert)
         _, predicted = torch.max(outputs.data, 1)
         predicted = predicted.type(torch.LongTensor)
         total += labels.size(0)
@@ -119,11 +122,12 @@ for i in range(0, epochs):
     for i_batch, data in enumerate(val_loader):
         if i_batch > sampleBatches:
             break
-        images = Variable(data['image'], volatile=True)
-        labels = data['label'].type(torch.LongTensor)
+        images = sample_batched['image']
+        labels = sample_batched['label'].type(torch.LongTensor)
         if runGPU:
             images = images.cuda()
-        outputs = cnn(images)
+        images_pert = attack.attack(cnn, images, labels)
+        outputs = cnn(images_pert)
         _, predicted = torch.max(outputs.data, 1)
         predicted = predicted.type(torch.LongTensor)
         total += labels.size(0)

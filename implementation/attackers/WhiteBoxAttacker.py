@@ -28,7 +28,7 @@ class PGDAttack(WhiteBoxAttacker):
         self.a = a
         self.k = k
 
-    def attack(self, model, x_nat, y):
+    def attack(self, model, x_nat, y, wrap=True):
         """ Takes an input batch and adds a small perturbation """
         is_cuda = x_nat.is_cuda
         min_values = -means/stds
@@ -51,7 +51,7 @@ class PGDAttack(WhiteBoxAttacker):
             for ch in range(3):
                 x[:,ch,:,:] = torch.clamp(x[:,ch,:,:], min_values[ch], max_values[ch])
             x = Variable(x, requires_grad=True)
-        return x.detach()
+        return x.detach() if wrap else x.data
 
     def __call__(self, model, img, return_img=False):
         s = torch.nn.Softmax(1)
@@ -84,8 +84,8 @@ if __name__ == "__main__":
     img = imread("/home/sprkrd/Pictures/banknotes/10/IMG_20171009_192337.jpg")
     img, p1 = wrapper(img, True)
     img_pert, p2 = attack(model, img, True)
-    print(p1)
-    print(p2)
+    # print(p1)
+    # print(p2)
     plt.subplot(2,2,1)
     plt.imshow(img)
     plt.gca().axes.get_xaxis().set_visible(False)

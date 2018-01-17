@@ -1,58 +1,106 @@
+# so it can be executed both with Python2 and Python3
+from __future__ import print_function, division
+
 import torch
 import torch.nn as nn
 import torch.optim as optim
 import torch.backends.cudnn as cudnn
+import torchvision
+import numpy as np
+import time
+
 from torch.autograd import Variable
 from torch.utils.data import DataLoader
 from torchvision import transforms
-import torchvision
-
 from skimage.transform import resize
 
-from data.EuroNotes import EuroNotes
-
-from models.ResNet18 import pretrained_res18
-
-import numpy as np
-
-import time
+from .data.EuroNotes import EuroNotes
+from .attackers.WhiteBoxAttacker import PGDAttack
+from .utils import means, stds
+from .models.ResNet18 import pretrained_res18
 
 
-# means and stds of the train set can be obtained with 
-# print(train_set.getMeansAndStdPerChannel())
-# this takes quite a while, so hard-coded here:
-# means = np.array([ 0.14588552,  0.26887908,  0.14538361])
-# stds = np.array([ 0.20122388,  0.2800698 ,  0.20029236])
-means = np.array([ 0.34065133, 0.30230788, 0.27947797])
-stds = np.array([ 0.28919015, 0.26877816, 0.25182973])
+class OutFeed:
+    def __init__(self):
+        self.last_msg = ""
+
+    def print(self, msg, *args, **kwargs):
+        kwargs["end"] = ""
+        empty = not self.last_msg
+        padding = len(self.last_msg) - len(msg)
+        self.last_msg = msg
+        if padding > 0:
+            msg = msg + " "*padding
+        print(msg if empty else "\r"+msg, *args, **kwargs)
+
+    def newline(self, msg, *args, **kwargs):
+        self.last_msg = ""
+        print("\n"+msg, *args, **kwargs)
 
 
-def resize_transform(img):
-    return resize(img, (224, 224), preserve_range=True, mode="constant")
-
-transformations = transforms.Compose([resize_transform, transforms.ToTensor(), transforms.Normalize(means, stds)])
-
-val_set = EuroNotes('../data-augmentation/banknotes_augmented/test', transform=transformations, resize=False)
-
-val_loader = DataLoader(val_set, batch_size=25, shuffle=True, num_workers=2)
-
-cnn = pretrained_res18()
-
-sampleBatches = 100
-
-correct = 0.0   
-total = 0.0
-for i_batch, data in enumerate(val_loader):
-    if i_batch > sampleBatches:
+def evaluate(model, data_set, attacker=None, sampleBatches=None, prefix="",
+             batch_size=25):
+    if model.training:
+        model.eval()
+    loader = DataLoader(data_set, batch_size=batch_size,
+                        shuffle=True, num_workers=2)
+    sampleBatches = sampleBatches or len(loader)
+    out = OutFeed()
+    correct = 0
+    total = 0
+    for i_batch, data in enumerate(loader):
+        if i_batch >= sampleBatches: 
             break
-    images = Variable(data['image'], volatile=True)
-    labels = data['label'].type(torch.LongTensor)
-    outputs = cnn(images)
-    _, predicted = torch.max(outputs.data, 1)
-    predicted = predicted.type(torch.LongTensor)
-    total += labels.size(0)
-    correct += (predicted == labels).sum()
-    validationAcc = 100 * correct / total
-    print('{}/{} Test Accuracy of CNN: {:.02f}%'.format(i_batch+1, sampleBatches, validationAcc), end="\r")
+        images = data['image']
+        labels = data['label']
+        if runGPU:
+            images = images.cuda()
+            labels = labels.cuda()
+        if attacker:
+            images = attacker.attack(model, images, labels, wrap=False)
+        images = Variable(images, volatile=True)
+        outputs = model(images)
+        _, predicted = torch.max(outputs.data, 1)
+        # predicted = predicted.type(torch.LongTensor)
+        total += labels.size(0)
+        correct += (predicted == labels).sum()
+        acc = 100 * correct / total
+        msg = '[{}/{}] {}: Accuracy of CNN: {:.02f}%'.format(
+                i_batch+1, sampleBatches, prefix, acc)
+        out.print(msg)
+    out.newline("{}: Final accuracy: {:.02f}%".format(prefix, acc))
+    return acc
 
+
+if __name__ == "__main__":
+    runGPU = True
+    if runGPU:
+        cudnn.benchmark = True
+
+    transformations = transforms.Compose([
+        lambda img: resize(img, (224,224), preserve_range=True, mode="constant"),
+        transforms.ToTensor(),
+        transforms.Normalize(means, stds),
+    ])
+
+    train_set = EuroNotes('data-augmentation/banknotes_augmented/train',
+                          transform=transformations, resize=False)
+    val_set = EuroNotes('data-augmentation/banknotes_augmented/val',
+                          transform=transformations, resize=False)
+    test_set = EuroNotes('data-augmentation/banknotes_augmented/test',
+                        transform=transformations, resize=False)
+
+    # which=0 basic model
+    # which=1 trained against PGD for 5 epochs (only against mild attacks)
+    cnn = pretrained_res18(which=1, gpu=runGPU)
+
+    # attacker = None
+    attacker = PGDAttack(k=5, epsilon=0.03) # mild attack
+    attacker = PGDAttack(k=10, epsilon=0.05) # strong attack
+
+    sampleBatches = 10
+
+    # evaluate(cnn, train_set, sampleBatches=100, prefix="Train set")
+    # evaluate(cnn, val_set, sampleBatches=100, prefix="Validation set")
+    evaluate(cnn, test_set, prefix="Test set", attacker=attacker, batch_size=25)
 
