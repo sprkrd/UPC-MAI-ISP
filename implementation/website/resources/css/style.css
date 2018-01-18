@@ -6,6 +6,10 @@ body, html {
 	width: 100% !important;
 	height: 100% !important;
 }
+#results_box img {
+	width: 224px;
+	height: 224px;
+}
 .canvas_ctn {
 	width: 224px;
 	height: 224px;

@@ -6,6 +6,7 @@ import io
 from torch.autograd import Variable
 from torchvision import transforms
 from skimage.transform import resize
+from scipy.misc import imread
 
 
 means = np.array([0.34065133, 0.30230788, 0.27947797])
@@ -51,18 +52,24 @@ def clamp_to_valid_img(images):
     return images
 
 
-# def heat_map(img1, img2):
-    # diff = np.abs(img1.astype(np.float) - img2)
-    # diff = np.mean(diff,2)
-    # min_ = np.min(diff)
-    # max_ = np.max(diff)
-    # diff = (diff-min_)/(max_-men_)
-    # plt.imshow(diff, cmap=plt.get_cmap("hot"))
-    # plt.gca().axes.get_xaxis().set_visible(False)
-    # plt.gca().axes.get_yaxis().set_visible(False)
-    # plt.colorbar()
-    # plt.tight_layout()
-
+def heat_map(img1, img2):
+    diff = np.abs(img2.astype(np.float) - img1)
+    diff = np.mean(diff,2)
+    min_ = np.min(diff)
+    max_ = np.max(diff)
+    diff = (diff-min_)/(max_-min_)
+    plt.imshow(diff, cmap=plt.get_cmap("hot"))
+    plt.gca().axes.get_xaxis().set_visible(False)
+    plt.gca().axes.get_yaxis().set_visible(False)
+    plt.colorbar()
+    plt.tight_layout()
+    buf = io.BytesIO()
+    plt.savefig(buf, format="png", bbox_inches='tight')
+    plt.close()
+    buf.seek(0)
+    I = imread(buf)
+    buf.close()
+    return I
 
 
 tform1 = transforms.Compose([
