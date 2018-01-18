@@ -41,6 +41,19 @@ class GANAttack(BlackBoxAttacker):
         return images
 
 
+class WhiteNoiseAttack(BlackBoxAttacker):
+
+    def __init__(self, attack_shape=None, intensity=0.2):
+        BlackBoxAttacker.__init__(self, attack_shape)
+        self.intensity = intensity
+
+    def attack(self, input_data):
+        noise = np.random.uniform(low=-self.intensity, high=self.intensity, size=np.array(tuple(input_data.shape)))
+        noise = torch.from_numpy(noise).float()
+        images = input_data + noise
+        images = clamp_to_valid_img(images)
+        return images
+
 if __name__ == "__main__":
 
 

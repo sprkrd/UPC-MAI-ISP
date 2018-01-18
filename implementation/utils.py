@@ -39,6 +39,15 @@ def do_batchy(label):
     return Variable(torch.Tensor([label]), volatile=True)
 
 
+def clamp_to_valid_img(images):
+    # expects images as torch tensor
+    # makes sure de-normalized image values will lie in range [0, 1]
+    for channel in range(3):
+        min_v = (0.0 - means[channel]) / stds[channel]
+        max_v = (1.0 - means[channel]) / stds[channel]
+        images[:, channel, :, :] = torch.clamp(images[:, channel, :, :], min_v, max_v)
+    return images
+
 
 tform1 = transforms.Compose([
     center_crop,
