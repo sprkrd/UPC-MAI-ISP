@@ -54,10 +54,10 @@ class PGDAttackBB(BlackBoxAttacker):
 
 class GANAttack(BlackBoxAttacker):
 
-    def __init__(self, attack_shape, intensity):
+    def __init__(self, attack_shape=None, intensity=0.2):
         BlackBoxAttacker.__init__(self, attack_shape)
 
-        attacker = PixelLevelTransferN(in_channels=3, out_channels=3, intensity=0.2)
+        attacker = PixelLevelTransferN(in_channels=3, out_channels=3, intensity=intensity)
         state_dict = torch.load('implementation/models/pretrained/gan_attacker.pkl')
         attacker.load_state_dict(state_dict)
         self.attacker = attacker

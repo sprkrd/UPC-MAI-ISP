@@ -49,5 +49,7 @@ class PixelLevelTransferN(nn.Module):
         out = self.dec2(out)
         out = self.dec3(out)
         out = self.dec4(out)
-        out = out.clamp(min=-self.intensity, max=self.intensity)
+        # out = out.clamp(min=-self.intensity, max=self.intensity)
+        out = out.clamp(min=-0.2, max=0.2)
+        out = out * (self.intensity / 0.2)
         return out
