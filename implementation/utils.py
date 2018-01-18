@@ -1,5 +1,7 @@
 import numpy as np
 import torch
+import matplotlib.pyplot as plt
+import io
 
 from torch.autograd import Variable
 from torchvision import transforms
@@ -47,6 +49,20 @@ def clamp_to_valid_img(images):
         max_v = (1.0 - means[channel]) / stds[channel]
         images[:, channel, :, :] = torch.clamp(images[:, channel, :, :], min_v, max_v)
     return images
+
+
+# def heat_map(img1, img2):
+    # diff = np.abs(img1.astype(np.float) - img2)
+    # diff = np.mean(diff,2)
+    # min_ = np.min(diff)
+    # max_ = np.max(diff)
+    # diff = (diff-min_)/(max_-men_)
+    # plt.imshow(diff, cmap=plt.get_cmap("hot"))
+    # plt.gca().axes.get_xaxis().set_visible(False)
+    # plt.gca().axes.get_yaxis().set_visible(False)
+    # plt.colorbar()
+    # plt.tight_layout()
+
 
 
 tform1 = transforms.Compose([
