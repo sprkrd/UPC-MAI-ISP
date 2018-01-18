@@ -4,6 +4,8 @@ from .Attacker import Attacker
 
 from ..models.PixelLevelTransferN import PixelLevelTransferN
 
+from ..utils import clamp_to_valid_img
+
 import torch
 from torch.autograd import Variable
 
@@ -34,8 +36,9 @@ class GANAttack(BlackBoxAttacker):
     def attack(self, input_data):
 
         images = Variable(input_data, volatile=True)
-
-        return (images + self.attacker(images)).data
+        images = (images + self.attacker(images)).data
+        images = clamp_to_valid_img(images)
+        return images
 
 
 if __name__ == "__main__":
