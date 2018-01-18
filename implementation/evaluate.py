@@ -102,7 +102,6 @@ if __name__ == "__main__":
     # attacker_mild = PGDAttack(k=5, epsilon=0.03) # mild attack
     # attacker_strong = PGDAttack(k=10, epsilon=0.05) # strong attack
     # attacker_gan = GANAttack(None, 0.2)
-    attacker_wn = WhiteNoiseAttack()
 
     # sampleBatches = 10
     # evaluate(cnn, train_set, sampleBatches=sampleBatches, prefix="Train set")
