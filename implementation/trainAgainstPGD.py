@@ -7,6 +7,7 @@ import torch.optim as optim
 import torch.backends.cudnn as cudnn
 import torchvision
 import os
+import shutil
 import numpy as np
 import time
 
@@ -20,9 +21,22 @@ from .utils import means, stds
 from .attackers.WhiteBoxAttacker import PGDAttack
 
 
+def load_checkpoint(gpu):
+    model = torchvision.models.resnet18()
+    model.fc = nn.Linear(512, 4)
+    path = "out/checkpoint.pkl"
+    state_dict = torch.load(path, map_location=lambda stg, _: stg)
+    model.load_state_dict(state_dict)
+    if gpu:
+        model.cuda()
+    return model
+
+
 ##
 # Run on GPU?
 ##
+resume = True
+
 runGPU = True
 if runGPU:
     cudnn.benchmark = True
@@ -41,23 +55,27 @@ val_set = EuroNotes('data-augmentation/banknotes_augmented/val', transform=trans
 train_loader = DataLoader(train_set, batch_size=25, shuffle=True, num_workers=2)
 val_loader = DataLoader(val_set, batch_size=25, shuffle=True, num_workers=2)
 
-cnn = torchvision.models.resnet18(pretrained=True)
-# for param in cnn.parameters():
-#       param.requires_grad = False
-cnn.fc = nn.Linear(512, 4)
 
-if runGPU:
-    cnn.cuda()
+if resume:
+    print("Resuming checkpoint...")
+    cnn = load_checkpoint(runGPU)
 else:
-    cnn.cpu()
+    cnn = torchvision.models.resnet18(pretrained=True)
+    # for param in cnn.parameters():
+    #       param.requires_grad = False
+    cnn.fc = nn.Linear(512, 4)
+    if runGPU:
+        cnn.cuda()
+    else:
+        cnn.cpu()
 
 criterion = nn.CrossEntropyLoss()
 optimizer = optim.Adam(cnn.parameters())
 
 
-epochs = 10
+epochs = 20
 
-bestValidationAcc = 0.0
+bestValidationLoss = 1e9
 
 # attack = PGDAttack(k=5)
 attack = PGDAttack(k=10, epsilon=0.05)
@@ -96,57 +114,67 @@ for i in range(0, epochs):
     if cnn.training:
         cnn.eval()
     
-    sampleBatches = 100
+    sampleBatches = 50
 
     print("Evaluating against training set...")
-    correct = 0.0   
-    total = 0.0
+    correct = 0   
+    total = 0
     for i_batch, data in enumerate(train_loader):
         if i_batch > sampleBatches:
             break
         images = sample_batched['image']
-        labels = sample_batched['label'].type(torch.LongTensor)
+        labels = sample_batched['label']
         if runGPU:
             images = images.cuda()
-        images_pert = attack.attack(cnn, images, labels)
+            labels = labels.cuda()
+        # images_pert = Variable(images, volatile=True)
+        images_pert = Variable(attack.attack(cnn, images, labels, wrap=False), volatile=True)
         outputs = cnn(images_pert)
         _, predicted = torch.max(outputs.data, 1)
-        predicted = predicted.type(torch.LongTensor)
         total += labels.size(0)
         correct += (predicted == labels).sum()
     trainAcc = correct / total
 
-    print("Evaluating against test set...")
-    correct = 0.0
-    total = 0.0
+    print("Evaluating against validation set...")
+    correct = 0
+    total = 0
+    validationLoss = 0
     for i_batch, data in enumerate(val_loader):
         if i_batch > sampleBatches:
             break
         images = sample_batched['image']
-        labels = sample_batched['label'].type(torch.LongTensor)
+        labels = sample_batched['label']
         if runGPU:
             images = images.cuda()
-        images_pert = attack.attack(cnn, images, labels)
+            labels = labels.cuda()
+        # images_pert = Variable(images, volatile=True)
+        images_pert = Variable(attack.attack(cnn, images, labels, wrap=False), volatile=True)
         outputs = cnn(images_pert)
+        validationLoss += criterion(outputs, Variable(labels)).data[0]
         _, predicted = torch.max(outputs.data, 1)
-        predicted = predicted.type(torch.LongTensor)
         total += labels.size(0)
         correct += (predicted == labels).sum()
+    validationLoss /= sampleBatches
     validationAcc = correct / total
     print('-- EPOCH ' + str(i+1) + ' DONE.')
     print('Time elapsed: ' + str(time.time() - t))
     print('Sampled accuracies from ' + str(sampleBatches) + ' batches.')
     print('(sampled) Attacked Train Accuracy of CNN: ' + str(trainAcc * 100) + '%')
     print('(sampled) Attacked Validation Accuracy of CNN: ' + str(validationAcc * 100) + '%')
+    print('(sampled) Average Validation Loss of attacked CNN: ' + str(validationLoss))
     print('--')
 
-    if validationAcc > bestValidationAcc:
-        try:
-            os.mkdir("out")
-        except OSError:
-            pass
-        bestValidationAcc = validationAcc
-        torch.save(cnn.state_dict(), 'out/baseClassifier_best.pkl')
+    try:
+        os.mkdir("out")
+    except OSError:
+        pass
+    torch.save(cnn.state_dict(), "out/checkpoint.pkl")
+    print("Saved checkpoint")
+
+    if validationLoss < bestValidationLoss:
+        shutil.copy("out/checkpoint.pkl", "out/best.pkl")
+        bestValidationLoss = validationLoss
+        torch.save(cnn.state_dict(), 'out/best.pkl')
         print('Stored new best base classifier')
         print('--')
 
