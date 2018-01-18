@@ -8,6 +8,65 @@
   //~ </div>
 //~ </div>
 
+//~ <div class="row">
+  //~ <h4>Benign example (no manipulation)</h4>
+  //~ <div class="col-md-4">
+    //~ <h5>Original image</h5>
+  //~ </div>
+  //~ <div class="col-md-4">
+    //~ <h5>Base classifier</h5>
+  //~ </div>
+  //~ <div class="col-md-4">
+    //~ <h5>Robust classifier</h5>
+  //~ </div>
+//~ </div>
+
+function create_image_column(parent, image, caption, column_size) {
+  var col = document.createElement("DIV");
+  var caption_h = document.createElement("H5");
+  var img = document.createElement("IMG");
+  col.className = "col-md-" + column_size;
+  caption_h.innerText = caption;
+  img.setAttribute("src", "data:image/png;base64, " + image);
+  col.appendChild(caption_h);
+  col.appendChild(img);
+  parent.appendChild(col);
+}
+
+function create_bar_chart_column(parent, data, caption, column_size, id) {
+  var col = document.createElement("DIV");
+  var caption_h = document.createElement("H5");
+  var canvas_ctn = document.createElement("DIV");
+  var canvas = document.createElement("CANVAS");
+  col.className = "col-md-" + column_size;
+  caption_h.innerText = caption;
+  canvas_ctn.className = "canvas_ctn";
+  canvas.id = id;
+  canvas.setAttribute("width", "100");
+  canvas.setAttribute("height", "100");
+  col.appendChild(caption_h);
+  col.appendChild(canvas_ctn);
+  canvas_ctn.appendChild(canvas);
+  parent.appendChild(col);
+  refreshChart(canvas, data);
+}
+
+function addrow(parent, dict, index) {
+  var row = document.createElement("DIV");
+  var header = document.createElement("H4");
+  var column_size = dict.image2? 3 : 4;
+  header.innerText = dict.title;
+  row.className = "row";
+  row.appendChild(header);
+  parent.appendChild(row);
+  create_image_column(row, dict.image1, dict.caption1, column_size);
+  if (dict.image2) {
+    create_image_column(row, dict.image2, dict.caption2, column_size);
+  }
+  create_bar_chart_column(row, dict.pdf1, "Base classifier", column_size, "base"+index);
+  create_bar_chart_column(row, dict.pdf2, "Robust classifier", column_size, "robust"+index);
+}
+
 function ajaxSuccess() {
   results_box = document.getElementById("results_box");
   for (var i=results_box.children.length; i--; ) {
@@ -20,27 +79,29 @@ function ajaxSuccess() {
     //~ results_box.innerHTML = this.responseText;
     results = JSON.parse(this.responseText);
     for (var i=0; i < results.length; ++i) {
-      r = results[i]
-      var row = document.createElement("DIV");
-      var header = document.createElement("H4");
-      var col0 = document.createElement("DIV");
-      var col1 = document.createElement("DIV");
-      var img = document.createElement("IMG");
-      var canvas = document.createElement("CANVAS");
-      row.className = "row";
-      header.innerText = r.title;
-      col0.className = col1.className = "col-md-6 col-xs-6";
-      img.setAttribute("src", "data:image/png;base64, " + r.image);
-      canvas.setAttribute("width", "100%");
-      canvas.setAttribute("height", "100%");
-      canvas.id = "chart" + (i+1).toString();
-      row.appendChild(header);
-      row.appendChild(col0);
-      row.appendChild(col1);
-      col0.appendChild(img);
-      col1.appendChild(canvas);
-      results_box.appendChild(row);
-      refreshChart(canvas, r.data);
+      var dict = results[i];
+      addrow(results_box, dict, i);
+      //~ r = results[i]
+      //~ var row = document.createElement("DIV");
+      //~ var header = document.createElement("H4");
+      //~ var col0 = document.createElement("DIV");
+      //~ var col1 = document.createElement("DIV");
+      //~ var img = document.createElement("IMG");
+      //~ var canvas = document.createElement("CANVAS");
+      //~ row.className = "row";
+      //~ header.innerText = r.title;
+      //~ col0.className = col1.className = "col-md-6 col-xs-6";
+      //~ img.setAttribute("src", "data:image/png;base64, " + r.image);
+      //~ canvas.setAttribute("width", "100%");
+      //~ canvas.setAttribute("height", "100%");
+      //~ canvas.id = "chart" + (i+1).toString();
+      //~ row.appendChild(header);
+      //~ row.appendChild(col0);
+      //~ row.appendChild(col1);
+      //~ col0.appendChild(img);
+      //~ col1.appendChild(canvas);
+      //~ results_box.appendChild(row);
+      //~ refreshChart(canvas, r.data);
     }
   }
   else {

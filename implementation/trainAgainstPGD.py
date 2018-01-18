@@ -95,7 +95,7 @@ for i in range(0, epochs):
             cnn.eval()
         # the attack method returns the perturbed images already encapsulated
         # in a variable
-        images_pert = attack.attack(cnn, images, labels)
+        images_pert = Variable(attack.attack(cnn, images, labels))
         labels = Variable(labels)
         cnn.train()
         optimizer.zero_grad()
@@ -128,7 +128,7 @@ for i in range(0, epochs):
             images = images.cuda()
             labels = labels.cuda()
         # images_pert = Variable(images, volatile=True)
-        images_pert = Variable(attack.attack(cnn, images, labels, wrap=False), volatile=True)
+        images_pert = Variable(attack.attack(cnn, images, labels), volatile=True)
         outputs = cnn(images_pert)
         _, predicted = torch.max(outputs.data, 1)
         total += labels.size(0)
@@ -148,7 +148,7 @@ for i in range(0, epochs):
             images = images.cuda()
             labels = labels.cuda()
         # images_pert = Variable(images, volatile=True)
-        images_pert = Variable(attack.attack(cnn, images, labels, wrap=False), volatile=True)
+        images_pert = Variable(attack.attack(cnn, images, labels), volatile=True)
         outputs = cnn(images_pert)
         validationLoss += criterion(outputs, Variable(labels)).data[0]
         _, predicted = torch.max(outputs.data, 1)
