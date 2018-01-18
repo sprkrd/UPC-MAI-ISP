@@ -93,12 +93,51 @@ class testHTTPServer_RequestHandler(BaseHTTPRequestHandler):
             img1, probdist1 = wrapper(I, return_img=True)
             print(probdist1)
             # Set headers and set output
+            b64 = cvt2b64(img1)
             self._set_headers(200, {
                 "Content-type": "application/json",
                 "Access-Control-Allow-Origin": "*",
             })
             self.wfile.write(json.dumps([
-                {"title": "Original input/Normal classifier", "image": cvt2b64(img1), "data": probdist1},
+                {
+                    "title": "Benign example",
+                    "image1": b64,
+                    "caption1": "Original Image",
+                    "pdf1": probdist1,
+                    "pdf2": probdist1
+                }, {
+                    "title": "Gaussian noise",
+                    "image1": b64,
+                    "image2": b64,
+                    "caption1": "Pertubed image",
+                    "caption2": "Perturbation heat map",
+                    "pdf1": probdist1,
+                    "pdf2": probdist1
+                }, {
+                    "title": "Whitebox PGD",
+                    "image1": b64,
+                    "image2": b64,
+                    "caption1": "Pertubed image",
+                    "caption2": "Perturbation heat map",
+                    "pdf1": probdist1,
+                    "pdf2": probdist1
+                }, {
+                    "title": "Blackbox PGD",
+                    "image1": b64,
+                    "image2": b64,
+                    "caption1": "Pertubed image",
+                    "caption2": "Perturbation heat map",
+                    "pdf1": probdist1,
+                    "pdf2": probdist1
+                }, {
+                    "title": "Blackbox GAN",
+                    "image1": b64,
+                    "image2": b64,
+                    "caption1": "Pertubed image",
+                    "caption2": "Perturbation heat map",
+                    "pdf1": probdist1,
+                    "pdf2": probdist1
+                },
             ]).encode("ascii"))
         except Exception as e:
             self._set_headers(500, {
