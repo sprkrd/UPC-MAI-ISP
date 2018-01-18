@@ -16,6 +16,7 @@ from skimage.transform import resize
 
 from .data.EuroNotes import EuroNotes
 from .attackers.WhiteBoxAttacker import PGDAttack
+from .attackers.BlackBoxAttacker import GANAttack, WhiteNoiseAttack
 from .utils import means, stds
 from .models.ResNet18 import pretrained_res18
 
@@ -38,7 +39,7 @@ class OutFeed:
         print("\n"+msg, *args, **kwargs)
 
 
-def evaluate(model, data_set, attacker=None, sampleBatches=None, prefix="",
+def evaluate(model, data_set, attacker=None, attack_mode='white', sampleBatches=None, prefix="",
              batch_size=25):
     if model.training:
         model.eval()
@@ -57,7 +58,10 @@ def evaluate(model, data_set, attacker=None, sampleBatches=None, prefix="",
             images = images.cuda()
             labels = labels.cuda()
         if attacker:
-            images = attacker.attack(model, images, labels, wrap=False)
+            if attack_mode == 'white':
+                images = attacker.attack(model, images, labels, wrap=False)
+            else:
+                images = attacker.attack(images)
         images = Variable(images, volatile=True)
         outputs = model(images)
         _, predicted = torch.max(outputs.data, 1)
@@ -95,14 +99,17 @@ if __name__ == "__main__":
     # which=2 trained against PGD for 5 epochs (against strong attacks)
     cnn = pretrained_res18(which=2, gpu=runGPU)
 
-    attacker_mild = PGDAttack(k=5, epsilon=0.03) # mild attack
-    attacker_strong = PGDAttack(k=10, epsilon=0.05) # strong attack
+    # attacker_mild = PGDAttack(k=5, epsilon=0.03) # mild attack
+    # attacker_strong = PGDAttack(k=10, epsilon=0.05) # strong attack
+    # attacker_gan = GANAttack(None, 0.2)
 
     # sampleBatches = 10
     # evaluate(cnn, train_set, sampleBatches=sampleBatches, prefix="Train set")
     # evaluate(cnn, val_set, sampleBatches=sampleBatches, prefix="Validation set")
 
-    evaluate(cnn, test_set, prefix="Test set (no attack)", attacker=None)
-    evaluate(cnn, test_set, prefix="Test set (mild attack)", attacker=attacker_mild)
-    evaluate(cnn, test_set, prefix="Test set (strong attack)", attacker=attacker_strong)
+    # evaluate(cnn, test_set, prefix="Test set (no attack)", attacker=None)
+    # evaluate(cnn, test_set, prefix="Test set (mild attack)", attacker=attacker_mild)
+    # evaluate(cnn, test_set, prefix="Test set (strong attack)", attacker=attacker_strong)
+    # evaluate(cnn, test_set, prefix="Test set (GAN attack)", attacker=attacker_gan, attack_mode='black')
+    evaluate(cnn, test_set, prefix="Test set (white noise attack)", attacker=attacker_wn, attack_mode='black')
 
