@@ -13,6 +13,8 @@ def pretrained_res18(which=0, gpu=False):
         filename = "res18_cpu.pkl"
     elif which == 1:
         filename = "res18_pgd_mild.pkl"
+    elif which == 2:
+        filename = "second_base.pkl"
     path = os.path.join(os.path.dirname(__file__), "pretrained", filename)
     state_dict = torch.load(path, map_location=lambda stg, _: stg)
     model.load_state_dict(state_dict)
