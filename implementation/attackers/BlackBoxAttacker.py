@@ -29,7 +29,7 @@ class BlackBoxAttacker(Attacker):
         """
         s = torch.nn.Softmax(1)
         x = tform2(tform1(img))
-        x_pert = Variable(self.attack(x), volatile=True)
+        x_pert = Variable(self.attack(x.data), volatile=True)
         y = s(model(x_pert))
         y = y.data.tolist()[0]
         if return_img:
@@ -46,9 +46,9 @@ class PGDAttackBB(BlackBoxAttacker):
 
     def attack(self, input_data):
         # obtain label predicted by attacker's model
-        y = self.model(input_data)
+        y = self.model(Variable(input_data, volatile=True))
         _, label = torch.max(y.data, 1)
-        x_pert = self.attacker.attack(self.model, input_data.data, label)
+        x_pert = self.attacker.attack(self.model, input_data, label)
         return x_pert
 
 
