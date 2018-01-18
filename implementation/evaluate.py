@@ -59,7 +59,7 @@ def evaluate(model, data_set, attacker=None, attack_mode='white', sampleBatches=
             labels = labels.cuda()
         if attacker:
             if attack_mode == 'white':
-                images = attacker.attack(model, images, labels, wrap=False)
+                images = attacker.attack(model, images, labels)
             else:
                 images = attacker.attack(images)
         images = Variable(images, volatile=True)
