@@ -86,8 +86,8 @@ def attack_results(image, attack, title):
         "pdf1": probdist1,
         "pdf2": probdist2,
     }
-    print(probdist1)
-    print(probdist2)
+    # print(probdist1)
+    # print(probdist2)
     return result
 
 
@@ -163,7 +163,7 @@ def run():
     print('starting server...')
     # Server settings
     # Choose port 8080, for port 80, which is normally used for a http server, you need root access
-    server_address = ('127.0.0.1', 8081)
+    server_address = ('127.0.0.1', 5000)
     httpd = HTTPServer(server_address, testHTTPServer_RequestHandler)
     print('running server...')
     httpd.serve_forever()

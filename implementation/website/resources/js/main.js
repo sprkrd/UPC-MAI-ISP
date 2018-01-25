@@ -68,6 +68,7 @@ function addrow(parent, dict, index) {
 }
 
 function ajaxSuccess() {
+  $("#classify-btn").button("reset");
   results_box = document.getElementById("results_box");
   for (var i=results_box.children.length; i--; ) {
     ch = results_box.children[i];
@@ -188,6 +189,7 @@ function refreshChart(canvas, data) {
 function AJAXSubmit (oFormElement) {
   if (!oFormElement.action) { return; }
   var oReq = new XMLHttpRequest();
+  $("#classify-btn").button("loading");
   oReq.onload = ajaxSuccess;
   oReq.open("post", oFormElement.action);
   oReq.send(new FormData(oFormElement));
