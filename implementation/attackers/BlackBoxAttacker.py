@@ -54,10 +54,10 @@ class PGDAttackBB(BlackBoxAttacker):
 
 class GANAttack(BlackBoxAttacker):
 
-    def __init__(self, attack_shape, intensity):
+    def __init__(self, attack_shape=None, intensity=0.2):
         BlackBoxAttacker.__init__(self, attack_shape)
 
-        attacker = PixelLevelTransferN(in_channels=3, out_channels=3, intensity=0.2)
+        attacker = PixelLevelTransferN(in_channels=3, out_channels=3, intensity=intensity)
         state_dict = torch.load('implementation/models/pretrained/gan_attacker.pkl')
         attacker.load_state_dict(state_dict)
         self.attacker = attacker
@@ -89,6 +89,7 @@ if __name__ == "__main__":
     from ..models.ResNet18 import pretrained_res18
     from ..models.ModelWrapper import ModelWrapper
     from skimage.io import imread, imshow
+    from ..utils import heat_map
     import matplotlib.pyplot as plt
     import numpy as np
     # quick test
@@ -125,16 +126,20 @@ if __name__ == "__main__":
     plt.xlabel("Banknote")
     plt.tight_layout()
     plt.show()
-    diff = np.abs(img_pert.astype(np.float) - img)
-    diff = np.mean(diff, 2)
-    min_ = np.min(diff)
-    max_ = np.max(diff)
-    diff = (diff-min_)/(max_-min_)
-    plt.imshow(diff, cmap=plt.get_cmap("hot"))
-    plt.title("Normalized differences (maximum diff: {:.00f})".format(max_))
-    plt.gca().axes.get_xaxis().set_visible(False)
-    plt.gca().axes.get_yaxis().set_visible(False)
-    plt.colorbar()
-    plt.tight_layout()
+    plt.close()
+    # diff = np.abs(img_pert.astype(np.float) - img)
+    # diff = np.mean(diff, 2)
+    # min_ = np.min(diff)
+    # max_ = np.max(diff)
+    # diff = (diff-min_)/(max_-min_)
+    # plt.imshow(diff, cmap=plt.get_cmap("hot"))
+    # plt.title("Normalized differences (maximum diff: {:.00f})".format(max_))
+    # plt.gca().axes.get_xaxis().set_visible(False)
+    # plt.gca().axes.get_yaxis().set_visible(False)
+    # plt.colorbar()
+    # plt.tight_layout()
+    # plt.show()
+    heatmap = heat_map(img, img_pert)
+    plt.imshow(heatmap)
     plt.show()
     
